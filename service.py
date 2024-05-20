@@ -54,7 +54,7 @@ def get_produtividade(timestamp_inicio, timestamp_fim):
     )
     produtividade_resultado = cursor.fetchall()
 
-    return produtividade_resultado
+    return produtividade_resultado[0]
 
 
 def total_produtos_produzidos(inicial, final):
@@ -66,10 +66,9 @@ def total_produtos_produzidos(inicial, final):
         WHERE status = 1 AND
         timestamp BETWEEN %s AND %s
         ORDER BY timestamp DESC
-        LIMIT 1;
+        LIMIT 1
     """,
-        inicial,
-        final,
+        (inicial, final),
     )
     dados = cursor.fetchone()
 
@@ -112,7 +111,7 @@ def get_intervalo_disponibilidade(timestamp_inicio, timestamp_fim):
                     timestamp
             ) AS grouped
             WHERE 
-                status = 1 and sensordata.timestamp BETWEEN %s AND %s
+                status = 1 and timestamp BETWEEN %s AND %s
             GROUP BY 
                 grp;
         """
