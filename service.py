@@ -75,22 +75,6 @@ def total_produtos_produzidos(inicial, final):
     return dados[0]
 
 
-def get_eventos_falhas(inicial, final):
-    # ajustar essa query por categorizacao de falhas
-    cursor.execute(
-        """
-        SELECT *
-        FROM sensordata
-        WHERE status = 0 and motivo is null and timestamp BETWEEN %s AND %s
-    """,
-        inicial,
-        final,
-    )
-    dados = cursor.fetchone()
-
-    return dados
-
-
 def get_intervalo_disponibilidade(timestamp_inicio, timestamp_fim):
     query = """
             SELECT 

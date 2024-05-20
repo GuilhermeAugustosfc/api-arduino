@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from service import (
     get_disponibilidade,
-    get_eventos_falhas,
     get_intervalos_falhas,
     get_produtividade,
     total_produtos_produzidos,
@@ -43,20 +42,12 @@ async def total_products_produced(
     return total_produzidos
 
 
-@app.get("/machine_failures/")
+@app.get("/intervalo_falhas/")
 async def machine_failures(
     timestamp_inicial: str = Query(...), timestamp_final: str = Query(...)
 ):
-    eventos_falha = get_eventos_falhas(timestamp_inicial, timestamp_final)
+    eventos_falha = get_intervalos_falhas(timestamp_inicial, timestamp_final)
     return eventos_falha
-
-
-@app.get("/intervalos_falha/")
-async def machine_failures(
-    timestamp_inicial: str = Query(...), timestamp_final: str = Query(...)
-):
-    intervalos = get_intervalos_falhas(timestamp_inicial, timestamp_final)
-    return intervalos
 
 
 @app.get("/historico/")
