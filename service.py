@@ -45,12 +45,10 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
 def get_produtividade(timestamp_inicio, timestamp_fim):
     cursor.execute(
         """
-        SELECT s.maquina_id, s.producao, m.total_produto,
-            (s.producao / m.total_produto) * 100 AS produtividade
+        SELECT s.maquina_id, s.producao, m.total_produto, (s.producao / m.total_produto) * 100 AS produtividade
         FROM sensordata s
         JOIN maquina m ON s.maquina_id = m.id
-        WHERE s.timestamp BETWEEN %s AND %s
-          AND s.timestamp = (SELECT MAX(timestamp) FROM sensordata WHERE status = 1)
+        WHERE s.producao = (SELECT MAX(producao) FROM sensordata WHERE status = 1 and sensordata.timestamp BETWEEN %s AND %s)
         """,
         (timestamp_inicio, timestamp_fim),
     )
@@ -79,7 +77,7 @@ def total_produtos_produzidos(inicial, final):
 
 
 def get_eventos_falhas(inicial, final):
-
+    # ajustar essa query por categorizacao de falhas
     cursor.execute(
         """
         SELECT *
