@@ -186,3 +186,41 @@ def update_motivo(timestamp_inicio, timestamp_fim, motivo):
             # Fecha a conexão
             db_connection.close()
             print("Conexão ao MySQL foi fechada")
+
+
+def config_maquina(total_produto, horario_max_manutencao, total_horas_trabalho):
+    try:
+        # Conexão com o banco de dados
+        if db_connection.is_connected():
+            cursor = db_connection.cursor()
+
+            # Query de atualização
+            query = """
+                UPDATE maquina 
+                SET total_produto = %s, horario_max_manutencao = %s, total_horas_trabalho = %s  
+                WHERE id = 1 LIMIT 1
+            """
+
+            # Executa a query
+            cursor.execute(
+                query, (total_produto, horario_max_manutencao, total_horas_trabalho)
+            )
+
+            # Confirma a transação
+            db_connection.commit()
+
+            print(f"Total de registros atualizados: {cursor.rowcount}")
+
+            # Fecha o cursor
+            updated_rows = cursor.rowcount
+            cursor.close()
+            return updated_rows
+
+    except Error as e:
+        print(f"Erro ao conectar ao MySQL: {e}")
+        return -1
+    finally:
+        if db_connection.is_connected():
+            # Fecha a conexão
+            db_connection.close()
+            print("Conexão ao MySQL foi fechada")

@@ -10,6 +10,7 @@ from service import (
     total_produtos_produzidos,
     get_historico,
     update_motivo,
+    config_maquina,
 )
 
 app = FastAPI()
@@ -84,6 +85,38 @@ async def motivo(request: MotivoRequest):
 
         update_rows = update_motivo(
             request.timestamp_inicial, request.timestamp_final, request.motivo
+        )
+
+        if update_rows == -1:
+            raise HTTPException(
+                status_code=500, detail="Erro ao atualizar o banco de dados"
+            )
+
+        if update_rows == 0:
+            raise HTTPException(
+                status_code=404, detail="Nenhum registro encontrado para atualizar"
+            )
+
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Formato de timestamp inválido. Use o formato ISO 8601.",
+        )
+
+
+class ConfigMaquina(BaseModel):
+    total_produto: int
+    horario_max_manutencao: str
+    total_horas_trabalho: str
+
+
+@app.post("/config-maquina/")
+async def motivo(request: ConfigMaquina):
+    try:
+        update_rows = config_maquina(
+            request.total_produto,
+            request.horario_max_manutencao,
+            request.total_horas_trabalho,
         )
 
         if update_rows == -1:
