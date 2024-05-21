@@ -54,7 +54,11 @@ def get_produtividade(timestamp_inicio, timestamp_fim):
     )
     produtividade_resultado = cursor.fetchall()
 
-    return produtividade_resultado[0]
+    if len(produtividade_resultado) > 0:
+
+        return produtividade_resultado[0]
+
+    return []
 
 
 def total_produtos_produzidos(inicial, final):
@@ -72,7 +76,10 @@ def total_produtos_produzidos(inicial, final):
     )
     dados = cursor.fetchone()
 
-    return dados[0]
+    if dados[0] is not None:
+        return dados[0]
+
+    return []
 
 
 def get_intervalo_disponibilidade(timestamp_inicio, timestamp_fim):
@@ -138,7 +145,7 @@ def get_intervalos_falhas(timestamp_inicio, timestamp_fim):
 
 def get_historico(timestamp_inicio, timestamp_fim):
     query = """
-            SELECT * from sensordata where timestamp BETWEEN %s AND %s
+            SELECT timestamp, status, producao, motivo from sensordata where timestamp BETWEEN %s AND %s
         """
     cursor.execute(query, (timestamp_inicio, timestamp_fim))
     dados = cursor.fetchall()
