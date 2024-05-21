@@ -1,5 +1,5 @@
 import mysql.connector
-from datetime import datetime
+from mysql.connector import Error
 
 config = {
     "host": "database-1.cpigwcyuk6vv.us-east-2.rds.amazonaws.com",
@@ -150,3 +150,39 @@ def get_historico(timestamp_inicio, timestamp_fim):
     cursor.execute(query, (timestamp_inicio, timestamp_fim))
     dados = cursor.fetchall()
     return dados
+
+
+def update_motivo(timestamp_inicio, timestamp_fim, motivo):
+    try:
+        # Conexão com o banco de dados
+        if db_connection.is_connected():
+            cursor = db_connection.cursor()
+
+            # Query de atualização
+            query = """
+                UPDATE sensordata 
+                SET motivo = %s 
+                WHERE timestamp BETWEEN %s AND %s
+            """
+
+            # Executa a query
+            cursor.execute(query, (motivo, timestamp_inicio, timestamp_fim))
+
+            # Confirma a transação
+            db_connection.commit()
+
+            print(f"Total de registros atualizados: {cursor.rowcount}")
+
+            # Fecha o cursor
+            updated_rows = cursor.rowcount
+            cursor.close()
+            return updated_rows
+
+    except Error as e:
+        print(f"Erro ao conectar ao MySQL: {e}")
+        return -1
+    finally:
+        if db_connection.is_connected():
+            # Fecha a conexão
+            db_connection.close()
+            print("Conexão ao MySQL foi fechada")

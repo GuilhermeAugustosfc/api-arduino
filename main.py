@@ -1,11 +1,15 @@
 from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from datetime import datetime
+
 from service import (
     get_disponibilidade,
     get_intervalos_falhas,
     get_produtividade,
     total_produtos_produzidos,
     get_historico,
+    update_motivo,
 )
 
 app = FastAPI()
@@ -56,6 +60,47 @@ async def machine_failures(
 ):
     intervalos = get_historico(timestamp_inicial, timestamp_final)
     return intervalos
+
+
+class MotivoRequest(BaseModel):
+    timestamp_inicial: str
+    timestamp_final: str
+    motivo: int
+
+
+@app.post("/motivo/")
+async def motivo(request: MotivoRequest):
+    try:
+        # Convertendo strings para objetos datetime para validar o formato e a ordem
+        timestamp_inicial = datetime.fromisoformat(request.timestamp_inicial)
+        timestamp_final = datetime.fromisoformat(request.timestamp_final)
+
+        # Verificando se timestamp_final é posterior ao timestamp_inicial
+        if timestamp_final <= timestamp_inicial:
+            raise HTTPException(
+                status_code=400,
+                detail="timestamp_final deve ser posterior ao timestamp_inicial",
+            )
+
+        update_rows = update_motivo(
+            request.timestamp_inicial, request.timestamp_final, request.motivo
+        )
+
+        if update_rows == -1:
+            raise HTTPException(
+                status_code=500, detail="Erro ao atualizar o banco de dados"
+            )
+
+        if update_rows == 0:
+            raise HTTPException(
+                status_code=404, detail="Nenhum registro encontrado para atualizar"
+            )
+
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Formato de timestamp inválido. Use o formato ISO 8601.",
+        )
 
 
 if __name__ == "__main__":
