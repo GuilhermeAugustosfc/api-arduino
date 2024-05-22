@@ -9,6 +9,7 @@ from service import (
     get_produtividade,
     total_produtos_produzidos,
     get_historico,
+    get_config_maquina,
     update_motivo,
     config_maquina,
 )
@@ -106,8 +107,14 @@ async def motivo(request: MotivoRequest):
 
 class ConfigMaquina(BaseModel):
     total_produto: int
-    horario_max_manutencao: str
-    total_horas_trabalho: str
+    horario_max_manutencao: int
+    total_horas_trabalho: int
+
+
+@app.get("/config-maquina/")
+async def motivo(id: str = Query(...)):
+    config = get_config_maquina(id)
+    return config
 
 
 @app.post("/config-maquina/")

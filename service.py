@@ -152,6 +152,15 @@ def get_historico(timestamp_inicio, timestamp_fim):
     return dados
 
 
+def get_config_maquina(id):
+    query = """
+        SELECT total_produto, horario_max_manutencao, total_horas_trabalho from maquina where id = %s
+    """
+    cursor.execute(query, (id))
+    dados = cursor.fetchone()[0]
+    return dados
+
+
 def update_motivo(timestamp_inicio, timestamp_fim, motivo):
     try:
         # Conexão com o banco de dados
