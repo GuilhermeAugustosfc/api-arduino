@@ -33,7 +33,8 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
     """
     )
     config_maquina = cursor.fetchone()
-
+    cursor.close()
+    db_connection.close()
     porc_tempo_trabalhado = (tempo_trabalhando / config_maquina[0]) * 100
     return {
         "porc_tempo_trabalhado": porc_tempo_trabalhado,
@@ -53,7 +54,8 @@ def get_produtividade(timestamp_inicio, timestamp_fim):
         (timestamp_inicio, timestamp_fim),
     )
     produtividade_resultado = cursor.fetchall()
-
+    cursor.close()
+    db_connection.close()
     if len(produtividade_resultado) > 0:
 
         return produtividade_resultado[0]
@@ -75,7 +77,8 @@ def total_produtos_produzidos(inicial, final):
         (inicial, final),
     )
     dados = cursor.fetchone()
-
+    cursor.close()
+    db_connection.close()
     if dados[0] is not None:
         return dados[0]
 
@@ -108,7 +111,8 @@ def get_intervalo_disponibilidade(timestamp_inicio, timestamp_fim):
         """
     cursor.execute(query, (timestamp_inicio, timestamp_fim))
     dados = cursor.fetchall()
-
+    cursor.close()
+    db_connection.close()
     return dados
 
 
@@ -140,6 +144,8 @@ def get_intervalos_falhas(timestamp_inicio, timestamp_fim):
         """
     cursor.execute(query, (timestamp_inicio, timestamp_fim))
     dados = cursor.fetchall()
+    cursor.close()
+    db_connection.close()
     return dados
 
 
@@ -149,6 +155,8 @@ def get_historico(timestamp_inicio, timestamp_fim):
         """
     cursor.execute(query, (timestamp_inicio, timestamp_fim))
     dados = cursor.fetchall()
+    cursor.close()
+    db_connection.close()
     return dados
 
 
@@ -159,6 +167,9 @@ def get_config_maquina(id):
     try:
         cursor.execute(query, (id,))
         resultado = cursor.fetchone()
+        cursor.close()
+        db_connection.close()
+
         if resultado:
             return resultado
         else:
@@ -192,6 +203,7 @@ def update_motivo(timestamp_inicio, timestamp_fim, motivo):
             # Fecha o cursor
             updated_rows = cursor.rowcount
             cursor.close()
+            db_connection.close()
             return updated_rows
 
     except Error as e:
@@ -230,6 +242,8 @@ def config_maquina(total_produto, horario_max_manutencao, total_horas_trabalho):
             # Fecha o cursor
             updated_rows = cursor.rowcount
             cursor.close()
+            db_connection.close()
+
             return updated_rows
 
     except Error as e:
