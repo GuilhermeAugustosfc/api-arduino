@@ -141,7 +141,7 @@ async def motivo(request: ConfigMaquina):
     except ValueError:
         raise HTTPException(
             status_code=400,
-            detail="Formato de timestamp inválido. Use o formato ISO 8601.",
+            detail="Erro ao atualizar",
         )
 
 
