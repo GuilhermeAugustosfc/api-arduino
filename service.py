@@ -154,11 +154,18 @@ def get_historico(timestamp_inicio, timestamp_fim):
 
 def get_config_maquina(id):
     query = """
-        SELECT total_produto, horario_max_manutencao, total_horas_trabalho from maquina where id = %s
+        SELECT total_produto, horario_max_manutencao, total_horas_trabalho FROM maquina WHERE id = %s
     """
-    cursor.execute(query, (id))
-    dados = cursor.fetchone()[0]
-    return dados
+    try:
+        cursor.execute(query, (id,))
+        resultado = cursor.fetchone()
+        if resultado:
+            return resultado
+        else:
+            return None  # ou outra forma de indicar que não há resultado
+    except Exception as e:
+        print(f"Erro ao buscar configuração da máquina: {e}")
+        return None
 
 
 def update_motivo(timestamp_inicio, timestamp_fim, motivo):

@@ -136,6 +136,8 @@ async def motivo(request: ConfigMaquina):
                 status_code=404, detail="Nenhum registro encontrado para atualizar"
             )
 
+        return update_rows
+
     except ValueError:
         raise HTTPException(
             status_code=400,
