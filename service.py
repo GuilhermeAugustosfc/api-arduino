@@ -1,4 +1,5 @@
 from mysql.connector import Error
+from datetime import timedelta
 
 from db_connection import get_db_connection, close_db_connection
 
@@ -105,39 +106,77 @@ def get_intervalo_disponibilidade(cursor, timestamp_inicio, timestamp_fim):
     return dados
 
 
+def segundos_para_horario(segundos):
+    td = timedelta(seconds=segundos)
+    horas, resto = divmod(td.seconds, 3600)
+    minutos, segundos = divmod(resto, 60)
+    return f"{horas:02}:{minutos:02}:{segundos:02}"
+
+
+def add_time_intervals(data):
+    dados = []
+
+    def verificar_variavel_ternario(valor):
+        return 0 if valor is None else valor
+
+    for row in data:
+        item = []
+        duracao_intervalo = row[3]
+        tempo_ate_proximo_status = row[4]
+        # Somando os intervalos
+        total_time = (
+            verificar_variavel_ternario(duracao_intervalo.seconds) + 0
+            if tempo_ate_proximo_status is None
+            else tempo_ate_proximo_status.seconds
+        )
+        time = segundos_para_horario(total_time)
+        item.append(row[0])
+        item.append(row[1])
+        item.append(row[2])
+        item.append(time)
+
+        dados.append(item)
+    return dados
+
+
 def get_intervalos_falhas(timestamp_inicio, timestamp_fim):
     connection = get_db_connection()
     if connection:
         cursor = connection.cursor()
+
         query = """
             SELECT 
-            MIN(timestamp) AS inicio_intervalo,
-            MAX(timestamp) AS fim_intervalo,
-            status,
-            sec_to_time(TIMESTAMPDIFF(SECOND, MIN(timestamp), MAX(timestamp))) AS duracao_intervalo
+                MIN(timestamp) AS inicio_intervalo,
+                next_timestamp as fim_intervalo,
+                status,
+                sec_to_time(TIMESTAMPDIFF(SECOND, MIN(timestamp), MAX(timestamp))) AS duracao_intervalo,
+                sec_to_time(TIMESTAMPDIFF(SECOND, MAX(timestamp), next_timestamp)) AS tempo_ate_proximo_status
             FROM (
-                SELECT
+                SELECT 
                     timestamp,
                     status,
                     motivo,
                     @group := IF(@prev_status = status, @group, @group + 1) AS grp,
-                    @prev_status := status
-                FROM
-                    sensordata,
+                    @prev_status := status,
+                    (SELECT MIN(timestamp) FROM sensordata WHERE timestamp > sd.timestamp AND status = 1) AS next_timestamp
+                FROM 
+                    sensordata sd,
                     (SELECT @group := 0, @prev_status := NULL) AS vars
-                ORDER BY
+                ORDER BY 
                     timestamp
             ) AS grouped
             WHERE 
-                status = 0 and motivo is null and timestamp BETWEEN %s AND %s
+                status = 0 AND motivo IS NULL and timestamp BETWEEN %s AND %s
             GROUP BY 
                 grp;
-        """
+            """
         cursor.execute(query, (timestamp_inicio, timestamp_fim))
         dados = cursor.fetchall()
         cursor.close()
         close_db_connection(connection)
-        return dados
+
+        response = add_time_intervals(dados)
+        return response
     return []
 
 
