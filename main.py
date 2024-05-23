@@ -122,8 +122,8 @@ async def motivo(request: ConfigMaquina):
     try:
         update_rows = config_maquina(
             request.total_produto,
-            request.horario_max_manutencao,
             request.total_horas_trabalho,
+            request.horario_max_manutencao,
         )
 
         if update_rows == -1:

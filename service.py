@@ -226,14 +226,18 @@ def update_motivo(timestamp_inicio, timestamp_fim, motivo):
             return -1
 
 
-def config_maquina(total_produto, horario_max_manutencao, total_horas_trabalho):
+def config_maquina(
+    total_produto,
+    total_horas_trabalho,
+    horario_max_manutencao,
+):
     connection = get_db_connection()
     if connection:
         try:
             cursor = connection.cursor()
             query = """
                 UPDATE maquina 
-                SET total_produto = %s, horario_max_manutencao = %s, total_horas_trabalho = %s  
+                SET total_produto = %s, total_horas_trabalho = %s, horario_max_manutencao = %s   
                 WHERE id = 1 LIMIT 1
             """
             cursor.execute(
