@@ -14,11 +14,8 @@ def calcular_diferenca_tempo(data):
         duracao_intervalo = row[3]
         tempo_ate_proximo_status = row[4]
         # Somando os intervalos
-        total_time = (
-            verificar_variavel_ternario(duracao_intervalo.seconds) + 0
-            if tempo_ate_proximo_status is None
-            else tempo_ate_proximo_status.seconds
-        )
+        total_time = duracao_intervalo.seconds + tempo_ate_proximo_status.seconds
+
         total += total_time
 
     return total
