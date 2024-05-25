@@ -4,10 +4,23 @@ from datetime import timedelta
 from db_connection import get_db_connection, close_db_connection
 
 
-def calcular_diferenca_tempo(dados):
+def calcular_diferenca_tempo(data):
     total = 0
-    for item in dados:
-        total += item[3].seconds
+
+    def verificar_variavel_ternario(valor):
+        return 0 if valor is None else valor
+
+    for row in data:
+        duracao_intervalo = row[3]
+        tempo_ate_proximo_status = row[4]
+        # Somando os intervalos
+        total_time = (
+            verificar_variavel_ternario(duracao_intervalo.seconds) + 0
+            if tempo_ate_proximo_status is None
+            else tempo_ate_proximo_status.seconds
+        )
+        total += total_time
+
     return total
 
 
@@ -15,10 +28,10 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
     connection = get_db_connection()
     if connection:
         cursor = connection.cursor()
-        intervalos = get_intervalo_disponibilidade(
+        intervalos_disponibilidade = get_intervalo_disponibilidade(
             cursor, timestamp_inicial, timestamp_final
         )
-        tempo_trabalhando = calcular_diferenca_tempo(intervalos)
+        tempo_trabalhando = calcular_diferenca_tempo(intervalos_disponibilidade)
 
         cursor.execute("SELECT total_horas_trabalho FROM maquina")
         config_maquina = cursor.fetchone()
@@ -63,7 +76,7 @@ def total_produtos_produzidos(inicial, final):
             """
             SELECT MAX(producao)
             FROM sensordata
-            WHERE status = 1 AND timestamp BETWEEN %s AND %s
+            WHERE timestamp BETWEEN %s AND %s
             ORDER BY timestamp DESC
             LIMIT 1
             """,
@@ -80,24 +93,27 @@ def total_produtos_produzidos(inicial, final):
 def get_intervalo_disponibilidade(cursor, timestamp_inicio, timestamp_fim):
     query = """
         SELECT 
-        MIN(timestamp) AS inicio_intervalo,
-        MAX(timestamp) AS fim_intervalo,
-        status,
-        sec_to_time(TIMESTAMPDIFF(SECOND, MIN(timestamp), MAX(timestamp))) AS duracao_intervalo
+            MIN(timestamp) AS inicio_intervalo,
+            next_timestamp as fim_intervalo,
+            status,
+            sec_to_time(TIMESTAMPDIFF(SECOND, MIN(timestamp), MAX(timestamp))) AS duracao_intervalo,
+            sec_to_time(TIMESTAMPDIFF(SECOND, MAX(timestamp), next_timestamp)) AS tempo_ate_proximo_status
         FROM (
-            SELECT
+            SELECT 
                 timestamp,
                 status,
+                motivo,
                 @group := IF(@prev_status = status, @group, @group + 1) AS grp,
-                @prev_status := status
-            FROM
-                sensordata,
+                @prev_status := status,
+                (SELECT MIN(timestamp) FROM sensordata WHERE timestamp > sd.timestamp AND status = 0) AS next_timestamp
+            FROM 
+                sensordata sd,
                 (SELECT @group := 0, @prev_status := NULL) AS vars
-            ORDER BY
+            ORDER BY 
                 timestamp
         ) AS grouped
         WHERE 
-            status = 1 and timestamp BETWEEN %s AND %s
+            status = 1 AND motivo IS NULL and timestamp BETWEEN %s AND %s
         GROUP BY 
             grp;
     """
