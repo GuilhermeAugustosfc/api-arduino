@@ -152,6 +152,49 @@ def add_time_intervals(data):
     return dados
 
 
+def get_quantidade_motivos(timestamp_inicio, timestamp_fim):
+
+    connection = get_db_connection()
+    if connection:
+        cursor = connection.cursor()
+
+        query = """
+            select motivo, COUNT(*) AS quantidade from (SELECT 
+                MIN(timestamp) AS inicio_intervalo,
+                next_timestamp as fim_intervalo,
+                status,
+                motivo,
+                sec_to_time(TIMESTAMPDIFF(SECOND, MIN(timestamp), MAX(timestamp))) AS duracao_intervalo,
+                sec_to_time(TIMESTAMPDIFF(SECOND, MAX(timestamp), next_timestamp)) AS tempo_ate_proximo_status
+            FROM (
+                SELECT 
+                    timestamp,
+                    status,
+                    motivo,
+                    @group := IF(@prev_status = status, @group, @group + 1) AS grp,
+                    @prev_status := status,
+                    (SELECT MIN(timestamp) FROM sensordata WHERE timestamp > sd.timestamp AND status = 1) AS next_timestamp
+                FROM 
+                    sensordata sd,
+                    (SELECT @group := 0, @prev_status := NULL) AS vars
+                ORDER BY 
+                    timestamp
+            ) AS grouped
+            WHERE 
+                status = 0 AND motivo IS NOT NULL and timestamp BETWEEN %s AND %s
+            GROUP BY 
+                grp) as intervalos GROUP BY motivo
+            """
+        cursor.execute(query, (timestamp_inicio, timestamp_fim))
+        dados = cursor.fetchall()
+        cursor.close()
+        close_db_connection(connection)
+
+        response = add_time_intervals(dados)
+        return response
+    return []
+
+
 def get_intervalos_falhas(timestamp_inicio, timestamp_fim):
     connection = get_db_connection()
     if connection:

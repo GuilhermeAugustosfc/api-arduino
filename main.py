@@ -12,6 +12,7 @@ from service import (
     get_config_maquina,
     update_motivo,
     config_maquina,
+    get_quantidade_motivos,
 )
 
 app = FastAPI()
@@ -30,6 +31,14 @@ async def disponibilidade(
 ):
     dispo = get_disponibilidade(timestamp_inicial, timestamp_final)
     return dispo
+
+
+@app.get("/quantidade_motivos/")
+async def disponibilidade(
+    timestamp_inicial: str = Query(...), timestamp_final: str = Query(...)
+):
+    quantidade_motivo = get_quantidade_motivos(timestamp_inicial, timestamp_final)
+    return quantidade_motivo
 
 
 @app.get("/produtividade/")
