@@ -34,7 +34,7 @@ async def disponibilidade(
 
 
 @app.get("/quantidade_motivos/")
-async def disponibilidade(
+async def quantidade_motivos(
     timestamp_inicial: str = Query(...), timestamp_final: str = Query(...)
 ):
     quantidade_motivo = get_quantidade_motivos(timestamp_inicial, timestamp_final)
