@@ -189,9 +189,7 @@ def get_quantidade_motivos(timestamp_inicio, timestamp_fim):
         dados = cursor.fetchall()
         cursor.close()
         close_db_connection(connection)
-
-        response = add_time_intervals(dados)
-        return response
+        return dados
     return []
 
 
