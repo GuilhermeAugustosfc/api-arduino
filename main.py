@@ -50,12 +50,6 @@ async def produtividade(
     return produ
 
 
-@app.post("/login/")
-async def login(login: str = Query(...), password: str = Query(...)):
-    user = get_user(login, password)
-    return user
-
-
 @app.get("/total_products_produced/")
 async def total_products_produced(
     timestamp_inicial: str = Query(...), timestamp_final: str = Query(...)
@@ -78,6 +72,17 @@ async def machine_failures(
 ):
     intervalos = get_historico(timestamp_inicial, timestamp_final)
     return intervalos
+
+
+class LoginRequest(BaseModel):
+    login: str
+    password: str
+
+
+@app.post("/login/")
+async def login(request: LoginRequest):
+    user = get_user(request.login, request.password)
+    return user
 
 
 class MotivoRequest(BaseModel):
