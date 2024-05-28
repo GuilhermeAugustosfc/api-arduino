@@ -50,7 +50,7 @@ def get_user(login, password):
         cursor = connection.cursor()
 
         cursor.execute(
-            "SELECT user, password, permission FROM user WHERE user = %s and password = %s",
+            "SELECT name, password, permission FROM user WHERE user = %s and password = %s",
             (login, password),
         )
         user = cursor.fetchone()
