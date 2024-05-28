@@ -13,6 +13,7 @@ from service import (
     update_motivo,
     config_maquina,
     get_quantidade_motivos,
+    get_user,
 )
 
 app = FastAPI()
@@ -47,6 +48,12 @@ async def produtividade(
 ):
     produ = get_produtividade(timestamp_inicial, timestamp_final)
     return produ
+
+
+@app.post("/login/")
+async def login(login: str = Query(...), password: str = Query(...)):
+    user = get_user(login, password)
+    return user
 
 
 @app.get("/total_products_produced/")

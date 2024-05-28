@@ -44,6 +44,22 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
     return None
 
 
+def get_user(login, password):
+    connection = get_db_connection()
+    if connection:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            "SELECT user, password, permission FROM user WHERE user = %s and password = %s",
+            (login, password),
+        )
+        user = cursor.fetchone()
+        cursor.close()
+        close_db_connection(connection)
+
+        return user
+
+
 def get_produtividade(timestamp_inicio, timestamp_fim):
     connection = get_db_connection()
     if connection:
