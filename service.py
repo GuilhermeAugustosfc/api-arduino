@@ -236,7 +236,7 @@ def get_intervalos_falhas(timestamp_inicio, timestamp_fim):
                     timestamp
             ) AS grouped
             WHERE 
-                status = 0 AND motivo IS NULL and timestamp BETWEEN %s AND %s
+                status = 0 and timestamp BETWEEN %s AND %s
             GROUP BY 
                 grp;
             """
