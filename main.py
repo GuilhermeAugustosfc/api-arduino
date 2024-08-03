@@ -130,6 +130,7 @@ class ConfigMaquina(BaseModel):
     total_produto: int
     horario_max_manutencao: int
     total_horas_trabalho: int
+    timeToCicleProducting: int
 
 
 @app.get("/config-maquina/")
@@ -145,6 +146,7 @@ async def motivo(request: ConfigMaquina):
             request.total_produto,
             request.total_horas_trabalho,
             request.horario_max_manutencao,
+            request.timeToCicleProducting,
         )
 
         if update_rows == -1:

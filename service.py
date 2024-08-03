@@ -269,7 +269,7 @@ def get_config_maquina(id):
     connection = get_db_connection()
     if connection:
         cursor = connection.cursor()
-        query = "SELECT total_produto, horario_max_manutencao, total_horas_trabalho FROM maquina WHERE id = %s"
+        query = "SELECT total_produto, horario_max_manutencao, total_horas_trabalho, tempo_de_ciclo FROM maquina WHERE id = %s"
         cursor.execute(query, (id,))
         resultado = cursor.fetchone()
         cursor.close()
@@ -307,7 +307,7 @@ def config_maquina(
             cursor = connection.cursor()
             query = """
                 UPDATE maquina 
-                SET total_produto = %s, total_horas_trabalho = %s, horario_max_manutencao = %s   
+                SET total_produto = %s, total_horas_trabalho = %s, horario_max_manutencao = %s, tempo_de_ciclo = %s   
                 WHERE id = 1 LIMIT 1
             """
             cursor.execute(
