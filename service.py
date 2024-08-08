@@ -30,16 +30,30 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
         )
         tempo_trabalhando = calcular_diferenca_tempo(intervalos_disponibilidade)
 
-        cursor.execute("SELECT total_horas_trabalho FROM maquina")
+        cursor.execute("SELECT total_horas_trabalho, tempo_de_ciclo FROM maquina")
         config_maquina = cursor.fetchone()
         cursor.close()
         close_db_connection(connection)
 
-        porc_tempo_trabalhado = (tempo_trabalhando / config_maquina[0]) * 100
+        total_horas_trabalho_segundos = config_maquina[0]
+        porc_tempo_trabalhado = (
+            tempo_trabalhando / total_horas_trabalho_segundos
+        ) * 100
+        tempo_ciclo = config_maquina[1]
+        total_produtos_que_deveria_produzir = (
+            total_horas_trabalho_segundos / tempo_ciclo
+        )
+        total_produtos_que_produziu = tempo_trabalhando / tempo_ciclo
+        porc_produtos_que_deveria_produzir_no_tempo_disponivel = (
+            total_produtos_que_produziu / total_produtos_que_deveria_produzir
+        ) * 100
         return {
             "porc_tempo_trabalhado": porc_tempo_trabalhado,
             "tempo_trabalhando_segundos": tempo_trabalhando,
-            "total_horas_trabalho_segundos": config_maquina[0],
+            "total_horas_trabalho_segundos": total_horas_trabalho_segundos,
+            "total_produtos_que_produziu": total_produtos_que_produziu,
+            "total_produtos_que_deveria_produzir": total_produtos_que_deveria_produzir,
+            "porc_produtos_que_deveria_produzir_no_tempo_disponivel": porc_produtos_que_deveria_produzir_no_tempo_disponivel,
         }
     return None
 
