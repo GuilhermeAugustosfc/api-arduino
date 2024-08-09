@@ -1,10 +1,11 @@
 from mysql.connector import Error
 from datetime import timedelta
+from datetime import datetime
 
 from db_connection import get_db_connection, close_db_connection
 
 
-def calcular_diferenca_tempo(data):
+def calcular_diferenca_tempo(data, timestamp_final):
     total = 0
 
     def verificar_variavel_ternario(valor):
@@ -14,7 +15,15 @@ def calcular_diferenca_tempo(data):
         duracao_intervalo = row[3]
         tempo_ate_proximo_status = row[4]
         # Somando os intervalos
-        total_time = duracao_intervalo.seconds + tempo_ate_proximo_status.seconds
+
+        if tempo_ate_proximo_status == None:
+            ultimo_tempo_ate_agora = row[0]
+            ultimo_tempo_do_filtro = timestamp_final
+            diferenca = ultimo_tempo_do_filtro - ultimo_tempo_ate_agora
+            diferenca_seconds = diferenca.total_seconds()
+            total_time = duracao_intervalo.seconds + diferenca_seconds
+        else:
+            total_time = duracao_intervalo.seconds + tempo_ate_proximo_status.seconds
 
         total += total_time
 
@@ -28,7 +37,11 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
         intervalos_disponibilidade = get_intervalo_disponibilidade(
             cursor, timestamp_inicial, timestamp_final
         )
-        tempo_trabalhando = calcular_diferenca_tempo(intervalos_disponibilidade)
+        date_object = datetime.strptime(timestamp_final, "%Y-%m-%d %H:%M:%S")
+
+        tempo_trabalhando = calcular_diferenca_tempo(
+            intervalos_disponibilidade, date_object
+        )
 
         cursor.execute("SELECT total_horas_trabalho, tempo_de_ciclo FROM maquina")
         config_maquina = cursor.fetchone()
