@@ -54,6 +54,7 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
             "total_produtos_que_produziu": total_produtos_que_produziu,
             "total_produtos_que_deveria_produzir": total_produtos_que_deveria_produzir,
             "porc_produtos_que_deveria_produzir_no_tempo_disponivel": porc_produtos_que_deveria_produzir_no_tempo_disponivel,
+            "tempo_de_ciclo": tempo_ciclo,
         }
     return None
 
