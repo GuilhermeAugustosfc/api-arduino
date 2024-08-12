@@ -14,6 +14,7 @@ from service import (
     config_maquina,
     get_quantidade_motivos,
     get_user,
+    get_timelapse,
 )
 
 app = FastAPI()
@@ -47,6 +48,14 @@ async def produtividade(
     timestamp_inicial: str = Query(...), timestamp_final: str = Query(...)
 ):
     produ = get_produtividade(timestamp_inicial, timestamp_final)
+    return produ
+
+
+@app.get("/timelapse/")
+async def timelapse(
+    timestamp_inicial: str = Query(...), timestamp_final: str = Query(...)
+):
+    produ = get_timelapse(timestamp_inicial, timestamp_final)
     return produ
 
 

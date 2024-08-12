@@ -8,9 +8,6 @@ from db_connection import get_db_connection, close_db_connection
 def calcular_diferenca_tempo(data, timestamp_final):
     total = 0
 
-    def verificar_variavel_ternario(valor):
-        return 0 if valor is None else valor
-
     for row in data:
         duracao_intervalo = row[3]
         tempo_ate_proximo_status = row[4]
@@ -274,6 +271,88 @@ def get_intervalos_falhas(timestamp_inicio, timestamp_fim):
         close_db_connection(connection)
 
         response = add_time_intervals(dados)
+        return response
+    return []
+
+
+def processar_timelapse(data):
+    # Verificando se o parâmetro é uma lista
+    if not isinstance(data, list):
+        return "Erro: O parâmetro deve ser uma lista de listas."
+
+    # Verificando se todos os elementos da lista são listas
+    for item in data:
+        if not isinstance(item, list):
+            return "Erro: Todos os elementos da lista principal devem ser listas."
+
+    # Verificando se cada lista interna tem exatamente dois elementos
+    for item in data:
+        if len(item) != 2:
+            return "Erro: Cada lista interna deve conter exatamente dois elementos."
+
+    array_simples = []
+
+    # Adicionando a primeira linha inteira
+    array_simples.extend(data[0])
+
+    # Adicionando apenas o segundo elemento das linhas subsequentes
+    for linha in data[1:]:
+        array_simples.append(linha[1])
+
+    return array_simples
+
+
+def get_timelapse(timestamp_inicio, timestamp_fim):
+    connection = get_db_connection()
+    if connection:
+        cursor = connection.cursor()
+        query = """
+            SELECT 
+                t1.timestamp, 
+                t1.status, 
+                t2.timestamp, 
+                t2.status
+            FROM 
+                (
+                    SELECT 
+                        @rownum := @rownum + 1 AS row_num, 
+                        timestamp, 
+                        status 
+                    FROM 
+                        sensordata, 
+                        (SELECT @rownum := 0) r 
+                        WHERE 
+                        timestamp BETWEEN %s AND %s
+                    ORDER BY 
+                        timestamp ASC
+                ) t1
+            JOIN 
+                (
+                    SELECT 
+                        @rownum2 := @rownum2 + 1 AS row_num, 
+                        timestamp, 
+                        status 
+                    FROM 
+                        sensordata, 
+                        (SELECT @rownum2 := 0) r 
+                        WHERE 
+                        timestamp BETWEEN %s AND %s
+                    ORDER BY 
+                        timestamp ASC
+                ) t2 
+            ON 
+                t1.row_num = t2.row_num - 1 
+            WHERE 
+                t1.status != t2.status;
+            """
+        cursor.execute(
+            query, (timestamp_inicio, timestamp_fim, timestamp_inicio, timestamp_fim)
+        )
+        dados = cursor.fetchall()
+        cursor.close()
+        close_db_connection(connection)
+
+        response = processar_timelapse(dados)
         return response
     return []
 
