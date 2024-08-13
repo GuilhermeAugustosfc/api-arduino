@@ -280,24 +280,21 @@ def processar_timelapse(data):
     if not isinstance(data, list):
         return "Erro: O parâmetro deve ser uma lista de listas."
 
-    # Verificando se todos os elementos da lista são listas
-    for item in data:
-        if not isinstance(item, list):
-            return "Erro: Todos os elementos da lista principal devem ser listas."
-
     # Verificando se cada lista interna tem exatamente dois elementos
-    for item in data:
-        if len(item) != 2:
-            return "Erro: Cada lista interna deve conter exatamente dois elementos."
 
     array_simples = []
 
     # Adicionando a primeira linha inteira
-    array_simples.extend(data[0])
+    array_simples.append(
+        {"hora": data[0][0], "status": data[0][2], "motivo": data[0][4]}
+    )
+    array_simples.append(
+        {"hora": data[0][1], "status": data[0][3], "motivo": data[0][5]}
+    )
 
     # Adicionando apenas o segundo elemento das linhas subsequentes
     for linha in data[1:]:
-        array_simples.append(linha[1])
+        array_simples.append({"hora": linha[1], "status": linha[3], "motivo": linha[5]})
 
     return array_simples
 
@@ -309,15 +306,18 @@ def get_timelapse(timestamp_inicio, timestamp_fim):
         query = """
             SELECT 
                 t1.timestamp, 
-                t1.status, 
                 t2.timestamp, 
-                t2.status
+                t1.status,
+                t2.status,
+                t1.motivo,
+                t2.motivo
             FROM 
                 (
                     SELECT 
                         @rownum := @rownum + 1 AS row_num, 
                         timestamp, 
-                        status 
+                        status,
+                        motivo 
                     FROM 
                         sensordata, 
                         (SELECT @rownum := 0) r 
@@ -331,7 +331,8 @@ def get_timelapse(timestamp_inicio, timestamp_fim):
                     SELECT 
                         @rownum2 := @rownum2 + 1 AS row_num, 
                         timestamp, 
-                        status 
+                        status,
+                        motivo  
                     FROM 
                         sensordata, 
                         (SELECT @rownum2 := 0) r 
