@@ -284,6 +284,9 @@ def processar_timelapse(data):
     if not isinstance(data, list):
         return "Erro: O parâmetro deve ser uma lista de listas."
 
+    if len(data) <= 0:
+        return "Erro: O parâmetro nao deve ser uma lista vazia."
+
     # Verificando se cada lista interna tem exatamente dois elementos
 
     array_simples = []
