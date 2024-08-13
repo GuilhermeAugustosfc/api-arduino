@@ -58,12 +58,16 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
             total_produtos_que_produziu / total_produtos_que_deveria_produzir
         ) * 100
         return {
-            "porc_tempo_trabalhado": porc_tempo_trabalhado,
-            "tempo_trabalhando_segundos": tempo_trabalhando,
-            "total_horas_trabalho_segundos": total_horas_trabalho_segundos,
-            "total_produtos_que_produziu": total_produtos_que_produziu,
-            "total_produtos_que_deveria_produzir": total_produtos_que_deveria_produzir,
-            "porc_produtos_que_deveria_produzir_no_tempo_disponivel": porc_produtos_que_deveria_produzir_no_tempo_disponivel,
+            "porc_tempo_trabalhado": int(porc_tempo_trabalhado),
+            "tempo_trabalhando_segundos": int(tempo_trabalhando),
+            "total_horas_trabalho_segundos": int(total_horas_trabalho_segundos),
+            "total_produtos_que_produziu": int(total_produtos_que_produziu),
+            "total_produtos_que_deveria_produzir": int(
+                total_produtos_que_deveria_produzir
+            ),
+            "porc_produtos_que_deveria_produzir_no_tempo_disponivel": int(
+                porc_produtos_que_deveria_produzir_no_tempo_disponivel
+            ),
             "tempo_de_ciclo": tempo_ciclo,
         }
     return None
