@@ -398,7 +398,7 @@ def update_motivo(timestamp_inicio, timestamp_fim, motivo):
         try:
             cursor = connection.cursor()
             query = """
-                UPDATE sensordata SET motivo = %s WHERE timestamp BETWEEN %s AND %s
+                UPDATE sensordata SET motivo = %s WHERE status = 0 AND timestamp BETWEEN %s AND %s
             """
             cursor.execute(query, (motivo, timestamp_inicio, timestamp_fim))
             connection.commit()
