@@ -288,22 +288,53 @@ def processar_timelapse(data):
         return "Erro: O parâmetro nao deve ser uma lista vazia."
 
     # Verificando se cada lista interna tem exatamente dois elementos
+    retorno = []
 
-    array_simples = []
-
-    # Adicionando a primeira linha inteira
-    array_simples.append(
-        {"hora": data[0][0], "status": data[0][2], "motivo": data[0][4]}
-    )
-    array_simples.append(
-        {"hora": data[0][1], "status": data[0][3], "motivo": data[0][5]}
-    )
-
+    # {"hora": linha[1], "status": linha[3], "motivo": linha[5]}
     # Adicionando apenas o segundo elemento das linhas subsequentes
-    for linha in data[1:]:
-        array_simples.append({"hora": linha[1], "status": linha[3], "motivo": linha[5]})
+    status_temp = None
+    hora_temp = None
+    motivo_temp = None
+    for i, linha in enumerate(data):
+        hora = linha[0]
+        status = linha[1]
+        motivo = linha[2]
 
-    return array_simples
+        if hora_temp is None:
+            hora_temp = hora
+
+        if status_temp is None:
+            status_temp = status
+
+        if motivo_temp is None:
+            motivo_temp = motivo
+
+        if status_temp != status:
+
+            retorno.append(
+                {
+                    "hora": hora_temp,
+                    "hora2": hora,
+                    "motivo": motivo_temp,
+                    "status": status_temp,
+                }
+            )
+
+            hora_temp = None
+            status_temp = None
+            motivo_temp = None
+
+        if i == len(data) - 1:
+            retorno.append(
+                {
+                    "hora": hora_temp,
+                    "hora2": hora,
+                    "motivo": motivo_temp,
+                    "status": status_temp,
+                }
+            )
+
+    return retorno
 
 
 def get_timelapse(timestamp_inicio, timestamp_fim):
@@ -311,51 +342,18 @@ def get_timelapse(timestamp_inicio, timestamp_fim):
     if connection:
         cursor = connection.cursor()
         query = """
-            SELECT 
-                t1.timestamp, 
-                t2.timestamp, 
-                t1.status,
-                t2.status,
-                t1.motivo,
-                t2.motivo
-            FROM 
-                (
-                    SELECT 
-                        @rownum := @rownum + 1 AS row_num, 
-                        timestamp, 
-                        status,
-                        motivo 
-                    FROM 
-                        sensordata, 
-                        (SELECT @rownum := 0) r 
-                        WHERE 
-                        timestamp BETWEEN %s AND %s
-                    ORDER BY 
-                        timestamp ASC
-                ) t1
-            JOIN 
-                (
-                    SELECT 
-                        @rownum2 := @rownum2 + 1 AS row_num, 
-                        timestamp, 
-                        status,
-                        motivo  
-                    FROM 
-                        sensordata, 
-                        (SELECT @rownum2 := 0) r 
-                        WHERE 
-                        timestamp BETWEEN %s AND %s
-                    ORDER BY 
-                        timestamp ASC
-                ) t2 
-            ON 
-                t1.row_num = t2.row_num - 1 
-            WHERE 
-                t1.status != t2.status;
+                SELECT 
+                    timestamp, 
+                    status,
+                    motivo 
+                FROM 
+                    sensordata
+                WHERE 
+                    timestamp BETWEEN %s AND %s
+                ORDER BY 
+                    timestamp ASC;
             """
-        cursor.execute(
-            query, (timestamp_inicio, timestamp_fim, timestamp_inicio, timestamp_fim)
-        )
+        cursor.execute(query, (timestamp_inicio, timestamp_fim))
         dados = cursor.fetchall()
         cursor.close()
         close_db_connection(connection)
