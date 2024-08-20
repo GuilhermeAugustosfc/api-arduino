@@ -192,7 +192,7 @@ def add_time_intervals(data):
         item.append(row[1])
         item.append(row[2])
         item.append(time)
-
+        item.append(row[5])
         dados.append(item)
     return dados
 
@@ -249,7 +249,8 @@ def get_intervalos_falhas(timestamp_inicio, timestamp_fim):
                 next_timestamp as fim_intervalo,
                 status,
                 sec_to_time(TIMESTAMPDIFF(SECOND, MIN(timestamp), MAX(timestamp))) AS duracao_intervalo,
-                sec_to_time(TIMESTAMPDIFF(SECOND, MAX(timestamp), next_timestamp)) AS tempo_ate_proximo_status
+                sec_to_time(TIMESTAMPDIFF(SECOND, MAX(timestamp), next_timestamp)) AS tempo_ate_proximo_status,
+                motivo
             FROM (
                 SELECT 
                     timestamp,
