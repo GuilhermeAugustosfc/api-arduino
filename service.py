@@ -226,7 +226,7 @@ def get_quantidade_motivos(timestamp_inicio, timestamp_fim):
                     timestamp
             ) AS grouped
             WHERE 
-                status = 0 AND motivo IS NOT NULL and timestamp BETWEEN %s AND %s
+                status = 0 and timestamp BETWEEN %s AND %s
             GROUP BY 
                 grp) as intervalos GROUP BY motivo
             """
