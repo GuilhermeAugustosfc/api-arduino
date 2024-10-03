@@ -414,6 +414,7 @@ def config_maquina(
     total_produto,
     total_horas_trabalho,
     horario_max_manutencao,
+    tempo_de_ciclo,
 ):
     connection = get_db_connection()
     if connection:
@@ -425,7 +426,13 @@ def config_maquina(
                 WHERE id = 1 LIMIT 1
             """
             cursor.execute(
-                query, (total_produto, horario_max_manutencao, total_horas_trabalho)
+                query,
+                (
+                    total_produto,
+                    horario_max_manutencao,
+                    total_horas_trabalho,
+                    tempo_de_ciclo,
+                ),
             )
             connection.commit()
             updated_rows = cursor.rowcount
