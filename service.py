@@ -382,7 +382,7 @@ def get_historico(timestamp_inicio, timestamp_fim):
 def get_config_maquina(id):
     connection = get_db_connection()
     if connection:
-        cursor = connection.cursor()
+        cursor = connection.cursor(dictionary=True)
         query = "SELECT total_produto, horario_max_manutencao, total_horas_trabalho, tempo_de_ciclo FROM maquina WHERE id = %s"
         cursor.execute(query, (id,))
         resultado = cursor.fetchone()
@@ -429,8 +429,8 @@ def config_maquina(
                 query,
                 (
                     total_produto,
-                    horario_max_manutencao,
                     total_horas_trabalho,
+                    horario_max_manutencao,
                     tempo_de_ciclo,
                 ),
             )
