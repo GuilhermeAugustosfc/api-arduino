@@ -140,6 +140,7 @@ class ConfigMaquina(BaseModel):
     horario_max_manutencao: int
     total_horas_trabalho: int
     timeToCicleProducting: int
+    pricePerPiece: float
 
 
 @app.get("/config-maquina/")
