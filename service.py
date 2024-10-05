@@ -415,6 +415,7 @@ def config_maquina(
     total_horas_trabalho,
     horario_max_manutencao,
     tempo_de_ciclo,
+    pricePerPiece,
 ):
     connection = get_db_connection()
     if connection:
@@ -422,7 +423,7 @@ def config_maquina(
             cursor = connection.cursor()
             query = """
                 UPDATE maquina 
-                SET total_produto = %s, total_horas_trabalho = %s, horario_max_manutencao = %s, tempo_de_ciclo = %s   
+                SET total_produto = %s, total_horas_trabalho = %s, horario_max_manutencao = %s, tempo_de_ciclo = %s, pricePerPiece = %s
                 WHERE id = 1 LIMIT 1
             """
             cursor.execute(
@@ -432,6 +433,7 @@ def config_maquina(
                     total_horas_trabalho,
                     horario_max_manutencao,
                     tempo_de_ciclo,
+                    pricePerPiece,
                 ),
             )
             connection.commit()

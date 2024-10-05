@@ -156,6 +156,7 @@ async def motivo(request: ConfigMaquina):
             request.total_horas_trabalho,
             request.horario_max_manutencao,
             request.timeToCicleProducting,
+            request.pricePerPiece,
         )
 
         if update_rows == -1:
