@@ -95,7 +95,7 @@ def get_produtividade(timestamp_inicio, timestamp_fim):
         cursor = connection.cursor()
         cursor.execute(
             """
-            SELECT s.maquina_id, s.producao, m.total_produto, (s.producao / m.total_produto) * 100 AS produtividade
+            SELECT s.maquina_id, s.producao, m.total_produto, (s.producao / m.total_produto) * 100 AS produtividade, m.pricePerPiece
             FROM sensordata s
             JOIN maquina m ON s.maquina_id = m.id
             WHERE s.producao = (SELECT MAX(producao) FROM sensordata WHERE status = 1 and sensordata.timestamp BETWEEN %s AND %s)
