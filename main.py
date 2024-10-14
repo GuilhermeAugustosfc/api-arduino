@@ -15,6 +15,8 @@ from service import (
     get_quantidade_motivos,
     get_user,
     get_timelapse,
+    save_apontamento,
+    pecas_perdidas,
 )
 
 app = FastAPI()
@@ -43,6 +45,35 @@ async def quantidade_motivos(
     return quantidade_motivo
 
 
+class salvarApontamento(BaseModel):
+    data: str
+    pecasDefeituosas: int
+
+
+@app.post("/salvar-apontamento")
+async def salvar_apontamento(request: salvarApontamento):
+    try:
+        update_rows = save_apontamento(request)
+
+        if update_rows == -1:
+            raise HTTPException(
+                status_code=500, detail="Erro ao atualizar o banco de dados"
+            )
+
+        if update_rows == 0:
+            raise HTTPException(
+                status_code=404, detail="Nenhum registro encontrado para atualizar"
+            )
+
+        return update_rows
+
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Erro ao atualizar",
+        )
+
+
 @app.get("/produtividade/")
 async def produtividade(
     timestamp_inicial: str = Query(...), timestamp_final: str = Query(...)
@@ -65,6 +96,12 @@ async def total_products_produced(
 ):
     total_produzidos = total_produtos_produzidos(timestamp_inicial, timestamp_final)
     return total_produzidos
+
+
+@app.get("/get_pecas_perdidas/")
+async def get_pecas_perdidas(date: str = Query(...)):
+    response = pecas_perdidas(date)
+    return response
 
 
 @app.get("/intervalo_falhas/")

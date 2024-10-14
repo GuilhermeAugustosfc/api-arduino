@@ -410,6 +410,56 @@ def update_motivo(timestamp_inicio, timestamp_fim, motivo):
             return -1
 
 
+def save_apontamento(request):
+    connection = get_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor()
+            query_verificar = """
+                SELECT quantidade FROM apontamento WHERE dia = %s
+            """
+            cursor.execute(query_verificar, (request.data,))
+            row = cursor.fetchone()
+            if row:
+                query_atualizar = """
+                    UPDATE apontamento SET quantidade = %s WHERE dia = %s
+                """
+                cursor.execute(
+                    query_atualizar, (request.pecasDefeituosas, request.data)
+                )
+            else:
+                query_inserir = """
+                    INSERT INTO apontamento (dia, quantidade) values (%s, %s)
+                """
+                cursor.execute(query_inserir, (request.data, request.pecasDefeituosas))
+            connection.commit()
+            updated_rows = cursor.rowcount
+            cursor.close()
+            close_db_connection(connection)
+            return updated_rows
+        except Error as e:
+            print(f"Erro ao conectar ao MySQL: {e}")
+            return -1
+
+
+def pecas_perdidas(date):
+    connection = get_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            query = """
+                SELECT quantidade FROM apontamento WHERE dia = %s
+            """
+            cursor.execute(query, (date,))
+            row = cursor.fetchone()
+            cursor.close()
+            close_db_connection(connection)
+            return row
+        except Error as e:
+            print(f"Erro ao conectar ao MySQL: {e}")
+            return -1
+
+
 def config_maquina(
     total_produto,
     total_horas_trabalho,
