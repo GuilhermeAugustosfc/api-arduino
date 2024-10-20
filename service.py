@@ -383,7 +383,7 @@ def get_config_maquina(id):
     connection = get_db_connection()
     if connection:
         cursor = connection.cursor(dictionary=True)
-        query = "SELECT total_produto, horario_max_manutencao, total_horas_trabalho, tempo_de_ciclo FROM maquina WHERE id = %s"
+        query = "SELECT total_produto, horario_max_manutencao, total_horas_trabalho, tempo_de_ciclo, pricePerPiece FROM maquina WHERE id = %s"
         cursor.execute(query, (id,))
         resultado = cursor.fetchone()
         cursor.close()
