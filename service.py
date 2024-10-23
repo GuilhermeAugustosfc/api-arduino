@@ -72,8 +72,8 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
         total_produtos_que_produziu_no_tempo_trabalhado_por_evento = producao
 
         porc_produtos_que_deveria_produzir_no_tempo_disponivel = (
-            total_produtos_que_produziu_no_tempo_trabalhado_por_ciclo
-            / total_produtos_que_produziu_no_tempo_trabalhado_por_evento
+            total_produtos_que_produziu_no_tempo_trabalhado_por_evento
+            / total_produtos_que_produziu_no_tempo_trabalhado_por_ciclo
         ) * 100
 
         porc_tempo_trabalhado_real_time = (
