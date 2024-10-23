@@ -5,40 +5,51 @@ from datetime import datetime
 from db_connection import get_db_connection, close_db_connection
 
 
-def calcular_diferenca_tempo(data, timestamp_final):
+def calcular_hora_trabalhada_segundos(data):
     total = 0
+    producao = 0
 
-    for row in data:
-        duracao_intervalo = row[3]
-        tempo_ate_proximo_status = row[4]
-        # Somando os intervalos
+    tempo_total_trabalho_ate_o_momento_segundos = 0
+    for index, item in enumerate(data):
+        if index == 0:
+            tempo_total_trabalho_ate_o_momento_segundos = item["hora"]
 
-        if tempo_ate_proximo_status == None:
-            ultimo_tempo_ate_agora = row[0]
-            ultimo_tempo_do_filtro = timestamp_final
-            diferenca = ultimo_tempo_do_filtro - ultimo_tempo_ate_agora
-            diferenca_seconds = diferenca.total_seconds()
-            total_time = duracao_intervalo.seconds + diferenca_seconds
-        else:
-            total_time = duracao_intervalo.seconds + tempo_ate_proximo_status.seconds
+        if index == len(data) - 1:
+            tempo_total_trabalho_ate_o_momento_segundos = (
+                item["hora2"] - tempo_total_trabalho_ate_o_momento_segundos
+            )
+            tempo_total_trabalho_ate_o_momento_segundos = (
+                tempo_total_trabalho_ate_o_momento_segundos.seconds
+            )
 
-        total += total_time
-
-    return total
+        if item["status"] == 1:
+            hora_inicio = (
+                item["hora"]
+                if isinstance(item["hora"], datetime)
+                else datetime.strptime(item["hora"], "%Y-%m-%d %H:%M:%S")
+            )
+            hora_fim = (
+                item["hora2"]
+                if isinstance(item["hora2"], datetime)
+                else datetime.strptime(item["hora2"], "%Y-%m-%d %H:%M:%S")
+            )
+            diferenca = hora_fim - hora_inicio
+            total += diferenca.total_seconds()
+            producao += item["producao"]
+    return int(total), producao, int(tempo_total_trabalho_ate_o_momento_segundos)
 
 
 def get_disponibilidade(timestamp_inicial, timestamp_final):
     connection = get_db_connection()
     if connection:
         cursor = connection.cursor()
-        intervalos_disponibilidade = get_intervalo_disponibilidade(
-            cursor, timestamp_inicial, timestamp_final
-        )
-        date_object = datetime.strptime(timestamp_final, "%Y-%m-%d %H:%M:%S")
+        intervalos_disponibilidade = get_timelapse(timestamp_inicial, timestamp_final)
 
-        tempo_trabalhando = calcular_diferenca_tempo(
-            intervalos_disponibilidade, date_object
-        )
+        (
+            tempo_trabalhando_segundos,
+            producao,
+            tempo_total_trabalho_ate_o_momento_segundos,
+        ) = calcular_hora_trabalhada_segundos(intervalos_disponibilidade)
 
         cursor.execute("SELECT total_horas_trabalho, tempo_de_ciclo FROM maquina")
         config_maquina = cursor.fetchone()
@@ -47,23 +58,40 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
 
         total_horas_trabalho_segundos = config_maquina[0]
         porc_tempo_trabalhado = (
-            tempo_trabalhando / total_horas_trabalho_segundos
+            tempo_trabalhando_segundos / total_horas_trabalho_segundos
         ) * 100
+
         tempo_ciclo = config_maquina[1]
-        total_produtos_que_deveria_produzir = (
+        total_produtos_que_deveria_produzir_no_final_do_dia_de_acordo_com_o_ciclo = (
             total_horas_trabalho_segundos / tempo_ciclo
         )
-        total_produtos_que_produziu = tempo_trabalhando / tempo_ciclo
+
+        total_produtos_que_produziu_no_tempo_trabalhado_por_ciclo = (
+            tempo_trabalhando_segundos / tempo_ciclo
+        )
+        total_produtos_que_produziu_no_tempo_trabalhado_por_evento = producao
+
         porc_produtos_que_deveria_produzir_no_tempo_disponivel = (
-            total_produtos_que_produziu / total_produtos_que_deveria_produzir
+            total_produtos_que_produziu_no_tempo_trabalhado_por_ciclo
+            / total_produtos_que_produziu_no_tempo_trabalhado_por_evento
+        ) * 100
+
+        porc_tempo_trabalhado_real_time = (
+            tempo_total_trabalho_ate_o_momento_segundos / tempo_trabalhando_segundos
         ) * 100
         return {
             "porc_tempo_trabalhado": int(porc_tempo_trabalhado),
-            "tempo_trabalhando_segundos": int(tempo_trabalhando),
+            "porc_tempo_trabalhado_real_time": int(porc_tempo_trabalhado_real_time),
+            "tempo_trabalhando_segundos": int(tempo_trabalhando_segundos),
             "total_horas_trabalho_segundos": int(total_horas_trabalho_segundos),
-            "total_produtos_que_produziu": int(total_produtos_que_produziu),
-            "total_produtos_que_deveria_produzir": int(
-                total_produtos_que_deveria_produzir
+            "total_produtos_que_deveria_produzir_no_final_do_dia_de_acordo_com_o_ciclo": int(
+                total_produtos_que_deveria_produzir_no_final_do_dia_de_acordo_com_o_ciclo
+            ),
+            "total_produtos_que_produziu_no_tempo_trabalhado_por_ciclo": int(
+                total_produtos_que_produziu_no_tempo_trabalhado_por_ciclo
+            ),
+            "total_produtos_que_produziu_no_tempo_trabalhado_por_evento": int(
+                total_produtos_que_produziu_no_tempo_trabalhado_por_evento
             ),
             "porc_produtos_que_deveria_produzir_no_tempo_disponivel": int(
                 porc_produtos_que_deveria_produzir_no_tempo_disponivel
@@ -130,38 +158,6 @@ def total_produtos_produzidos(inicial, final):
         if dados[0] is not None:
             return dados[0]
     return []
-
-
-def get_intervalo_disponibilidade(cursor, timestamp_inicio, timestamp_fim):
-    query = """
-        SELECT 
-            MIN(timestamp) AS inicio_intervalo,
-            next_timestamp as fim_intervalo,
-            status,
-            sec_to_time(TIMESTAMPDIFF(SECOND, MIN(timestamp), MAX(timestamp))) AS duracao_intervalo,
-            sec_to_time(TIMESTAMPDIFF(SECOND, MAX(timestamp), next_timestamp)) AS tempo_ate_proximo_status
-        FROM (
-            SELECT 
-                timestamp,
-                status,
-                motivo,
-                @group := IF(@prev_status = status, @group, @group + 1) AS grp,
-                @prev_status := status,
-                (SELECT MIN(timestamp) FROM sensordata WHERE timestamp > sd.timestamp AND status = 0) AS next_timestamp
-            FROM 
-                sensordata sd,
-                (SELECT @group := 0, @prev_status := NULL) AS vars
-            ORDER BY 
-                timestamp
-        ) AS grouped
-        WHERE 
-            status = 1 AND motivo IS NULL and timestamp BETWEEN %s AND %s
-        GROUP BY 
-            grp;
-    """
-    cursor.execute(query, (timestamp_inicio, timestamp_fim))
-    dados = cursor.fetchall()
-    return dados
 
 
 def segundos_para_horario(segundos):
@@ -300,6 +296,7 @@ def processar_timelapse(data):
         hora = linha[0]
         status = linha[1]
         motivo = linha[2]
+        producao = linha[3]
 
         if hora_temp is None:
             hora_temp = hora
@@ -318,6 +315,7 @@ def processar_timelapse(data):
                     "hora2": hora,
                     "motivo": motivo_temp,
                     "status": status_temp,
+                    "producao": producao,
                 }
             )
 
@@ -332,6 +330,7 @@ def processar_timelapse(data):
                     "hora2": hora,
                     "motivo": motivo_temp,
                     "status": status_temp,
+                    "producao": producao,
                 }
             )
 
@@ -346,7 +345,8 @@ def get_timelapse(timestamp_inicio, timestamp_fim):
                 SELECT 
                     timestamp, 
                     status,
-                    motivo 
+                    motivo,
+                    producao
                 FROM 
                     sensordata
                 WHERE 
