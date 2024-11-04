@@ -17,6 +17,7 @@ from service import (
     get_timelapse,
     save_apontamento,
     pecas_perdidas,
+    pecas_perdidas_range,
 )
 
 app = FastAPI()
@@ -101,6 +102,14 @@ async def total_products_produced(
 @app.get("/get_pecas_perdidas/")
 async def get_pecas_perdidas(date: str = Query(...)):
     response = pecas_perdidas(date)
+    return response
+
+
+@app.get("/get_pecas_perdidas_range/")
+async def get_pecas_perdidas_range(
+    date_inicial: str = Query(...), date_final: str = Query(...)
+):
+    response = pecas_perdidas_range(date_inicial, date_final)
     return response
 
 

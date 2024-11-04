@@ -463,6 +463,24 @@ def pecas_perdidas(date):
             return -1
 
 
+def pecas_perdidas_range(date_inicial, date_final):
+    connection = get_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            query = """
+                SELECT sum(quantidade) as quantidade FROM apontamento WHERE dia BETWEEN %s AND %s
+            """
+            cursor.execute(query, (date_inicial, date_final))
+            row = cursor.fetchone()
+            cursor.close()
+            close_db_connection(connection)
+            return row
+        except Error as e:
+            print(f"Erro ao conectar ao MySQL: {e}")
+            return -1
+
+
 def config_maquina(
     total_produto,
     total_horas_trabalho,
