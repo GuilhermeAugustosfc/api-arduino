@@ -77,7 +77,7 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
         ) * 100
 
         porc_tempo_trabalhado_real_time = (
-            tempo_total_trabalho_ate_o_momento_segundos / tempo_trabalhando_segundos
+            tempo_trabalhando_segundos / tempo_total_trabalho_ate_o_momento_segundos
         ) * 100
         return {
             "porc_tempo_trabalhado": int(porc_tempo_trabalhado),
