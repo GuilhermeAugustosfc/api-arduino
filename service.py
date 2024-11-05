@@ -35,7 +35,7 @@ def calcular_hora_trabalhada_segundos(data):
             )
             diferenca = hora_fim - hora_inicio
             total += diferenca.total_seconds()
-            producao += item["producao"]
+            producao = item["producao"]
     return int(total), producao, int(tempo_total_trabalho_ate_o_momento_segundos)
 
 
