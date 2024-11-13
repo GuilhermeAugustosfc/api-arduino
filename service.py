@@ -50,6 +50,9 @@ def calcular_tempo_medio_ciclo(dados):
         hora_atual = dados[i][0]
         hora_proxima = dados[i + 1][0]
 
+        if dados[i][1] == 0:
+            continue
+
         # Convertendo para datetime se necessário
         if not isinstance(hora_atual, datetime):
             hora_atual = datetime.strptime(hora_atual, "%Y-%m-%d %H:%M:%S")
