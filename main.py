@@ -36,6 +36,8 @@ async def disponibilidade(
     timestamp_inicial: str = Query(...), timestamp_final: str = Query(...)
 ):
     dispo = get_disponibilidade(timestamp_inicial, timestamp_final)
+    if isinstance(dispo, str):  # Se retornou mensagem de erro
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=dispo)
     return dispo
 
 
@@ -89,7 +91,14 @@ async def timelapse(
     timestamp_inicial: str = Query(...), timestamp_final: str = Query(...)
 ):
     dados = get_timelapse(timestamp_inicial, timestamp_final)
+    if not dados:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Sem dados disponíveis para o período informado",
+        )
     response = processar_timelapse(dados)
+    if isinstance(response, str):  # Se retornou mensagem de erro
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=response)
     return response
 
 

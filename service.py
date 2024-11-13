@@ -68,8 +68,21 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
     if connection:
         cursor = connection.cursor()
         dados = get_timelapse(timestamp_inicial, timestamp_final)
+
+        # Verifica se há dados no período
+        if not dados:
+            return "Erro: Sem dados disponíveis para o período informado."
+
         tempo_medio_ciclo = calcular_tempo_medio_ciclo(dados)
         intervalos_disponibilidade = processar_timelapse(dados)
+
+        # Verifica se houve erro no processamento do timelapse
+        if isinstance(intervalos_disponibilidade, str):
+            return intervalos_disponibilidade
+
+        # Verifica se há intervalos de disponibilidade
+        if not intervalos_disponibilidade:
+            return "Erro: Não foi possível calcular os intervalos de disponibilidade."
 
         (
             tempo_trabalhando_segundos,
@@ -79,15 +92,30 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
 
         cursor.execute("SELECT total_horas_trabalho, tempo_de_ciclo FROM maquina")
         config_maquina = cursor.fetchone()
+
+        if not config_maquina:
+            cursor.close()
+            close_db_connection(connection)
+            return "Erro: Configurações da máquina não encontradas."
+
         cursor.close()
         close_db_connection(connection)
 
         total_horas_trabalho_segundos = config_maquina[0]
+        tempo_ciclo = config_maquina[1]
+
+        # Evita divisão por zero
+        if (
+            total_horas_trabalho_segundos == 0
+            or tempo_ciclo == 0
+            or tempo_total_trabalho_ate_o_momento_segundos == 0
+        ):
+            return "Erro: Valores inválidos nas configurações da máquina."
+
         porc_tempo_trabalhado = (
             tempo_trabalhando_segundos / total_horas_trabalho_segundos
         ) * 100
 
-        tempo_ciclo = config_maquina[1]
         total_produtos_que_deveria_produzir_no_final_do_dia_de_acordo_com_o_ciclo = (
             total_horas_trabalho_segundos / tempo_ciclo
         )
@@ -105,6 +133,7 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
         porc_tempo_trabalhado_real_time = (
             tempo_trabalhando_segundos / tempo_total_trabalho_ate_o_momento_segundos
         ) * 100
+
         return {
             "porc_tempo_trabalhado": int(porc_tempo_trabalhado),
             "porc_tempo_trabalhado_real_time": int(porc_tempo_trabalhado_real_time),
@@ -128,7 +157,7 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
             "tempo_de_ciclo": tempo_ciclo,
             "tempo_medio_ciclo": tempo_medio_ciclo,
         }
-    return None
+    return "Erro: Não foi possível conectar ao banco de dados."
 
 
 def get_user(login, password):
