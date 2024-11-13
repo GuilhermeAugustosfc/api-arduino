@@ -39,11 +39,37 @@ def calcular_hora_trabalhada_segundos(data):
     return int(total), producao, int(tempo_total_trabalho_ate_o_momento_segundos)
 
 
+def calcular_tempo_medio_ciclo(dados):
+    if not isinstance(dados, list) or len(dados) <= 1:
+        return 0
+
+    total_tempo = 0
+    quantidade_eventos = 0
+
+    for i in range(len(dados) - 1):
+        hora_atual = dados[i][0]
+        hora_proxima = dados[i + 1][0]
+
+        # Convertendo para datetime se necessário
+        if not isinstance(hora_atual, datetime):
+            hora_atual = datetime.strptime(hora_atual, "%Y-%m-%d %H:%M:%S")
+        if not isinstance(hora_proxima, datetime):
+            hora_proxima = datetime.strptime(hora_proxima, "%Y-%m-%d %H:%M:%S")
+
+        diferenca = hora_proxima - hora_atual
+        total_tempo += diferenca.total_seconds()
+        quantidade_eventos += 1
+
+    return int(total_tempo / quantidade_eventos) if quantidade_eventos > 0 else 0
+
+
 def get_disponibilidade(timestamp_inicial, timestamp_final):
     connection = get_db_connection()
     if connection:
         cursor = connection.cursor()
-        intervalos_disponibilidade = get_timelapse(timestamp_inicial, timestamp_final)
+        dados = get_timelapse(timestamp_inicial, timestamp_final)
+        tempo_medio_ciclo = calcular_tempo_medio_ciclo(dados)
+        intervalos_disponibilidade = processar_timelapse(dados)
 
         (
             tempo_trabalhando_segundos,
@@ -100,6 +126,7 @@ def get_disponibilidade(timestamp_inicial, timestamp_final):
                 tempo_total_trabalho_ate_o_momento_segundos
             ),
             "tempo_de_ciclo": tempo_ciclo,
+            "tempo_medio_ciclo": tempo_medio_ciclo,
         }
     return None
 
@@ -361,9 +388,7 @@ def get_timelapse(timestamp_inicio, timestamp_fim):
         dados = cursor.fetchall()
         cursor.close()
         close_db_connection(connection)
-
-        response = processar_timelapse(dados)
-        return response
+        return dados
     return []
 
 

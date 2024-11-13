@@ -18,6 +18,7 @@ from service import (
     save_apontamento,
     pecas_perdidas,
     pecas_perdidas_range,
+    processar_timelapse,
 )
 
 app = FastAPI()
@@ -87,8 +88,9 @@ async def produtividade(
 async def timelapse(
     timestamp_inicial: str = Query(...), timestamp_final: str = Query(...)
 ):
-    produ = get_timelapse(timestamp_inicial, timestamp_final)
-    return produ
+    dados = get_timelapse(timestamp_inicial, timestamp_final)
+    response = processar_timelapse(dados)
+    return response
 
 
 @app.get("/total_products_produced/")
