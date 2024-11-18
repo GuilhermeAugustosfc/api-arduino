@@ -338,65 +338,60 @@ def get_intervalos_falhas(timestamp_inicio, timestamp_fim):
     return []
 
 
-def processar_timelapse(data):
-    # Verificando se o parâmetro é uma lista
-    if not isinstance(data, list):
-        return "Erro: O parâmetro deve ser uma lista de listas."
+def processar_timelapse(registros):
+    # Validação dos dados de entrada
+    if not isinstance(registros, list):
+        return "Erro: O parâmetro deve ser uma lista de registros."
 
-    if len(data) <= 0:
-        return "Erro: O parâmetro nao deve ser uma lista vazia."
+    if not registros:
+        return "Erro: A lista de registros não pode estar vazia."
 
-    # Verificando se cada lista interna tem exatamente dois elementos
-    retorno = []
+    intervalos_status = []
+    timestamp_inicial = None
+    status_atual = None
+    motivo_atual = None
 
-    # {"hora": linha[1], "status": linha[3], "motivo": linha[5]}
-    # Adicionando apenas o segundo elemento das linhas subsequentes
-    status_temp = None
-    hora_temp = None
-    motivo_temp = None
-    for i, linha in enumerate(data):
-        hora = linha[0]
-        status = linha[1]
-        motivo = linha[2]
-        producao = linha[3]
+    for indice, registro in enumerate(registros):
+        timestamp = registro[0]
+        status = registro[1]
+        motivo = registro[2]
+        producao = registro[3]
 
-        if hora_temp is None:
-            hora_temp = hora
+        # Inicializa os valores do primeiro registro
+        if timestamp_inicial is None:
+            timestamp_inicial = timestamp
+            status_atual = status
+            motivo_atual = motivo
 
-        if status_temp is None:
-            status_temp = status
+        # Detecta mudança de status
+        if status_atual != status:
+            intervalo = {
+                "hora": timestamp_inicial,
+                "hora2": timestamp,
+                "motivo": motivo_atual,
+                "status": status_atual,
+                "producao": producao,
+            }
+            intervalos_status.append(intervalo)
 
-        if motivo_temp is None:
-            motivo_temp = motivo
+            # Reinicia valores para próximo intervalo
+            if indice < len(registros) - 1:
+                timestamp_inicial = None
+                status_atual = None
+                motivo_atual = None
 
-        if status_temp != status:
+        # Adiciona o último intervalo
+        if indice == len(registros) - 1:
+            intervalo_final = {
+                "hora": timestamp_inicial,
+                "hora2": timestamp,
+                "motivo": motivo_atual,
+                "status": status_atual,
+                "producao": producao,
+            }
+            intervalos_status.append(intervalo_final)
 
-            retorno.append(
-                {
-                    "hora": hora_temp,
-                    "hora2": hora,
-                    "motivo": motivo_temp,
-                    "status": status_temp,
-                    "producao": producao,
-                }
-            )
-
-            hora_temp = None
-            status_temp = None
-            motivo_temp = None
-
-        if i == len(data) - 1:
-            retorno.append(
-                {
-                    "hora": hora_temp,
-                    "hora2": hora,
-                    "motivo": motivo_temp,
-                    "status": status_temp,
-                    "producao": producao,
-                }
-            )
-
-    return retorno
+    return intervalos_status
 
 
 def get_timelapse(timestamp_inicio, timestamp_fim):
