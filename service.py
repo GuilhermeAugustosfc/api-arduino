@@ -397,7 +397,7 @@ def processar_timelapse(registros):
             motivo_atual = motivo
 
         # Detecta mudança de status
-        if status_atual != status:
+        if status_atual != status and indice != len(registros) - 1:
             intervalo = {
                 "hora": timestamp_inicial,
                 "hora2": timestamp,
