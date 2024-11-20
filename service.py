@@ -6,37 +6,70 @@ from db_connection import get_db_connection, close_db_connection
 
 
 def calcular_hora_trabalhada_segundos(data):
-    total = 0
+    """
+    Calcula o tempo total trabalhado em segundos, produção e tempo total até o momento
+
+    Args:
+        data: Lista de dicionários com informações de hora, status e produção
+
+    Returns:
+        tuple: (tempo_total_trabalhado, producao, tempo_total_ate_momento)
+    """
+
+    def converter_para_datetime(horario):
+        return (
+            horario
+            if isinstance(horario, datetime)
+            else datetime.strptime(horario, "%Y-%m-%d %H:%M:%S")
+        )
+
+    def obter_hora_inicio_turno():
+        agora = datetime.now()
+        hora_atual = agora.hour
+        data_atual = agora.date()
+
+        # Primeiro turno: 08:00 às 18:00
+        # Segundo turno: 18:00 às 02:00
+        if 8 <= hora_atual < 18:
+            # Primeiro turno
+            return datetime.combine(
+                data_atual, datetime.strptime("08:00:00", "%H:%M:%S").time()
+            )
+        elif hora_atual >= 18 or hora_atual < 2:
+            # Segundo turno
+            if hora_atual < 2:
+                # Se for entre 0h e 2h, usa o dia anterior
+                data_atual = data_atual - timedelta(days=1)
+            return datetime.combine(
+                data_atual, datetime.strptime("18:00:00", "%H:%M:%S").time()
+            )
+        else:
+            # Fora do horário de trabalho, retorna None
+            return None
+
+    tempo_total = 0
     producao = 0
+    tempo_total_ate_momento = 0
 
-    tempo_total_trabalho_ate_o_momento_segundos = 0
-    for index, item in enumerate(data):
-        if index == 0:
-            tempo_total_trabalho_ate_o_momento_segundos = item["hora"]
+    primeiro_item = data[0]
+    ultimo_item = data[-1]
+    producao = ultimo_item["producao"]
 
-        if index == len(data) - 1:
-            tempo_total_trabalho_ate_o_momento_segundos = (
-                item["hora2"] - tempo_total_trabalho_ate_o_momento_segundos
-            )
-            tempo_total_trabalho_ate_o_momento_segundos = (
-                tempo_total_trabalho_ate_o_momento_segundos.seconds
-            )
+    # Nova lógica para hora inicial
+    hora_inicio_turno = obter_hora_inicio_turno()
+    if hora_inicio_turno:
+        tempo_total_ate_momento = (ultimo_item["hora2"] - hora_inicio_turno).seconds
+    else:
+        tempo_total_ate_momento = (ultimo_item["hora2"] - primeiro_item["hora"]).seconds
 
-        if item["status"] == 1:
-            hora_inicio = (
-                item["hora"]
-                if isinstance(item["hora"], datetime)
-                else datetime.strptime(item["hora"], "%Y-%m-%d %H:%M:%S")
-            )
-            hora_fim = (
-                item["hora2"]
-                if isinstance(item["hora2"], datetime)
-                else datetime.strptime(item["hora2"], "%Y-%m-%d %H:%M:%S")
-            )
-            diferenca = hora_fim - hora_inicio
-            total += diferenca.total_seconds()
-            producao = item["producao"]
-    return int(total), producao, int(tempo_total_trabalho_ate_o_momento_segundos)
+    producao = 0
+    for item in data:
+        if item["status"] == 1 or item["motivo"] == 3:
+            hora_inicio = converter_para_datetime(item["hora"])
+            hora_fim = converter_para_datetime(item["hora2"])
+            tempo_total += (hora_fim - hora_inicio).total_seconds()
+
+    return int(tempo_total), producao, int(tempo_total_ate_momento)
 
 
 def calcular_tempo_medio_ciclo(dados):
