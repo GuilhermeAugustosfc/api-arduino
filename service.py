@@ -62,7 +62,6 @@ def calcular_hora_trabalhada_segundos(data):
     else:
         tempo_total_ate_momento = (ultimo_item["hora2"] - primeiro_item["hora"]).seconds
 
-    producao = 0
     for item in data:
         if item["status"] == 1 or item["motivo"] == 3:
             hora_inicio = converter_para_datetime(item["hora"])
